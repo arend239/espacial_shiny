@@ -1,6 +1,6 @@
 # App Shiny com Estatística Espacial: 
 
-App desenvolvido para disciplina de Estatística Espacial
+App desenvolvido para disciplina MAT02040 - Estatística Espacial 2025/2
 
 **Grupo:** Davi Augusto, Eduardo Garcez e João Arend
 
