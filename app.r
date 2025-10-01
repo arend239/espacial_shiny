@@ -10,15 +10,15 @@ library(DT)
 library(ggplot2)
 library(plotly)
 
-df <- read_excel("data/dados_wgs.xlsx")
+df <- read_excel("dados_wgs.xlsx")
 
 # Baixa os shapes (formatos geográficos)
 # shape_sp <- read_municipality(code_muni = 3550308, year = 2020)
 # shape_bairros <- read_neighborhood(city = "São Paulo", year = 2020)
 
 # Carrega os shapes (formatos geográficos) a partir de arquivos locais
-shape_sp <- readRDS("data/shape_sp.rds")
-#shape_bairros <- readRDS("data/shape_bairros.rds")
+shape_sp <- readRDS("shape_sp.rds")
+#shape_bairros <- readRDS("shape_bairros.rds")
 
 df_l <- df %>%
   filter(!is.na(valor_total) & valor_total != "") %>%
