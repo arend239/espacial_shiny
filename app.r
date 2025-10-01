@@ -6,6 +6,9 @@ library(leaflet)
 library(geobr)
 library(sf)
 library(htmlwidgets)
+library(DT)
+library(ggplot2)
+library(plotly)
 
 df <- read_excel("data/dados_wgs.xlsx")
 
@@ -81,6 +84,25 @@ ui <- navbarPage(
       )
     ),
     tabPanel(
+      "Análise",
+      fluidPage(
+        h3("Análise Gráfica"),
+        p("Gráficos dinâmicos baseados nos dados filtrados. Passe o mouse sobre os gráficos para mais detalhes."),
+        fluidRow(
+          column(width = 6, plotlyOutput("hist_preco")),
+          column(width = 6, plotlyOutput("scatter_preco_area"))
+        ),
+        hr(),
+        fluidRow(
+          column(width = 12, plotlyOutput("boxplot_bairro"))
+        ),
+        hr(),
+        h3("Tabela de Dados"),
+        p("Tabela com os dados detalhados dos imóveis que correspondem aos filtros selecionados."),
+        DT::dataTableOutput("tabela_dados")
+      )
+    ),
+    tabPanel(
       "Sobre",
       fluidPage(
         h3("Sobre o Projeto"),
@@ -138,7 +160,7 @@ server <- function(input, output, session) {
       addPolygons(
         data = shape_sp,
         #fillColor = "#66CDAA",
-        fillColor = "#2c9975",
+        fillColor = "#347761",
         weight = 2,
         color = "white",
         fillOpacity = 0.3,
@@ -182,6 +204,65 @@ server <- function(input, output, session) {
         ),
         clusterOptions = markerClusterOptions()
       )
+  })
+
+  # Renderiza a tabela de dados interativa
+  output$tabela_dados <- DT::renderDataTable({
+    df <- dados_filtrados() %>%
+      select(bairro, valor_total, area_util, quartos, banheiros, vagas, condominio)
+
+    datatable(
+      df,
+      rownames = FALSE,
+      options = list(
+        pageLength = 10,
+        scrollX = TRUE,
+        language = list(url = '//cdn.datatables.net/plug-ins/1.10.25/i18n/Portuguese-Brasil.json')
+      ),
+      colnames = c("Bairro", "Preço (R$)", "Área (m²)", "Quartos", "Banheiros", "Vagas", "Condomínio (R$)")
+    ) %>%
+      formatCurrency(c("valor_total", "condominio"), currency = "R$", interval = 3, mark = ".", dec.mark = ",")
+  })
+
+  # Gráficos Dinâmicos
+  output$hist_preco <- renderPlotly({
+    p <- ggplot(dados_filtrados(), aes(x = valor_total)) +
+      geom_histogram(aes(text = ..count..), fill = "#1695bb", bins = 30) +
+      labs(title = "Distribuição dos Preços", x = "Preço", y = "") +
+      theme_minimal() +
+      scale_x_continuous(labels = scales::dollar_format(prefix = "R$"))
+
+    ggplotly(p, tooltip = c("x", "text"))
+  })
+
+  output$scatter_preco_area <- renderPlotly({
+    p <- ggplot(dados_filtrados(), aes(x = area_util, y = valor_total)) +
+      geom_point(aes(text = paste("Bairro:", bairro)), color = "#1695bb", alpha = 0.6) +
+      labs(title = "Preço vs. Área Útil (m²)", x = "Área Útil (m²)", y = "") +
+      theme_minimal() +
+      scale_y_continuous(labels = scales::dollar_format(prefix = "R$"))
+
+    ggplotly(p, tooltip = c("x", "y", "text"))
+  })
+
+  output$boxplot_bairro <- renderPlotly({
+
+    top_bairros <- dados_filtrados() %>%
+      count(bairro, sort = TRUE) %>%
+      top_n(10) %>%
+      pull(bairro)
+
+    df_plot <- dados_filtrados() %>%
+      filter(bairro %in% top_bairros)
+
+    p <- ggplot(df_plot, aes(x = reorder(bairro, valor_total, FUN = median), y = valor_total)) +
+      geom_boxplot(fill = "#1695bb") +
+      labs(title = "Distribuição de Preços nos 10 Bairros com Mais Anúncios", x = "", y = "Preço") +
+      theme_minimal() +
+      scale_y_continuous(labels = scales::dollar_format(prefix = "R$")) +
+      coord_flip()
+
+    ggplotly(p)
   })
 }
 
