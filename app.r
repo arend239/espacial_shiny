@@ -31,17 +31,16 @@ df_l <- df %>%
   )) %>%
   filter(!is.na(lat) & !is.na(lon) & !is.na(valor_total))
 
-# Define os valores mínimos e máximos para os filtros
-min_preco <- min(df_l$valor_total, na.rm = TRUE)
-max_preco <- max(df_l$valor_total, na.rm = TRUE)
-min_area <- min(df_l$area_util, na.rm = TRUE)
-max_area <- max(df_l$area_util, na.rm = TRUE)
-min_quartos <- min(df_l$quartos, na.rm = TRUE)
-max_quartos <- max(df_l$quartos, na.rm = TRUE)
+min_preco     <- min(df_l$valor_total, na.rm = TRUE)
+max_preco     <- max(df_l$valor_total, na.rm = TRUE)
+min_area      <- min(df_l$area_util, na.rm = TRUE)
+max_area      <- max(df_l$area_util, na.rm = TRUE)
+min_quartos   <- min(df_l$quartos, na.rm = TRUE)
+max_quartos   <- max(df_l$quartos, na.rm = TRUE)
 min_banheiros <- min(df_l$banheiros, na.rm = TRUE)
 max_banheiros <- max(df_l$banheiros, na.rm = TRUE)
-min_vagas <- min(df_l$vagas, na.rm = TRUE)
-max_vagas <- max(df_l$vagas, na.rm = TRUE)
+min_vagas     <- min(df_l$vagas, na.rm = TRUE)
+max_vagas     <- max(df_l$vagas, na.rm = TRUE)
 
 ui <- navbarPage(
     "PrimeiroAndar | São Paulo",
@@ -87,7 +86,7 @@ ui <- navbarPage(
       "Análise",
       fluidPage(
         h3("Análise Gráfica"),
-        p("Gráficos dinâmicos baseados nos dados filtrados. Passe o mouse sobre os gráficos para mais detalhes."),
+        p(""),
         fluidRow(
           column(width = 6, plotlyOutput("hist_preco")),
           column(width = 6, plotlyOutput("scatter_preco_area"))
@@ -115,7 +114,7 @@ ui <- navbarPage(
           "Projeto da disciplina MAT02040 - Estatística Espacial, disponível no ",
           tags$a(href = "https://github.com/arend239/espacial_shiny", "Github"),
           ".",
-          align = "center",
+          align = "left",
           style = "padding: 10px;"
         )
       )
@@ -188,7 +187,6 @@ server <- function(input, output, session) {
       #)
   })
 
-  # ATUALIZA os pontos do mapa filtrado
   observe({
     leafletProxy("mapa_sp", data = dados_filtrados()) %>%
       clearMarkers() %>%
@@ -206,7 +204,6 @@ server <- function(input, output, session) {
       )
   })
 
-  # Renderiza a tabela de dados interativa
   output$tabela_dados <- DT::renderDataTable({
     df <- dados_filtrados() %>%
       select(bairro, valor_total, area_util, quartos, banheiros, vagas, condominio)
@@ -224,7 +221,6 @@ server <- function(input, output, session) {
       formatCurrency(c("valor_total", "condominio"), currency = "R$", interval = 3, mark = ".", dec.mark = ",")
   })
 
-  # Gráficos Dinâmicos
   output$hist_preco <- renderPlotly({
     p <- ggplot(dados_filtrados(), aes(x = valor_total)) +
       geom_histogram(aes(text = ..count..), fill = "#1695bb", bins = 30) +
